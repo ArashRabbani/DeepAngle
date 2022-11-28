@@ -7,7 +7,7 @@ Here, I have written some demos to calculate a few contact angles.
 
 ## Demo #1 : Calculating the contact angle distribution from real data
 In this example, the input data is recorded in an hdf file with the format of 16-bit signed integer and filed name of "/Map". Three phases are availible in the image, solid, fluid #1 and fluid #2. Solid is denoted by voxel values of 1, fluid #1 which is assumed to be the wetting phase or water is coded as voxel values of 0, and fluid #2 is coded with voxel values of 2. Any irrelevant pixel, such as background, is denoted by -1. 
-
+In this example, the raw tomography data is from [From connected pathway flow to ganglion dynamics by Rucker et al.].
 ```python
 import deepangle as da
 # Name of the hdf5 file containing the volumetric image (h5 filed name: /Map)
