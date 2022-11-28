@@ -7,14 +7,13 @@ import copy
 import math
 import random
 from joblib import Parallel, delayed
-import joblib
 from tqdm import tqdm
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dropout, Input, Conv3D, MaxPooling3D, Dense, Flatten, Reshape, BatchNormalization
 import edt # Multithread distance transform https://github.com/seung-lab/euclidean-distance-transform-3d
-random.seed(1)
-np.random.seed(1)
+# random.seed(1)
+# np.random.seed(1)
 def shiftmatrix(A,x,*args):
     B=copy.deepcopy(A)
     if len(args)==0:
@@ -217,7 +216,6 @@ def gen(N,Rad):
         A[A==3]=1
         x,Locs=feature(A,Rad,unique=1)
         if len(x)==0:
-            # print('Tight Angle')
             continue
         y=np.ones((x.shape[0],1))*Tet
         X=np.append(X,x)
@@ -225,7 +223,6 @@ def gen(N,Rad):
         
         if len(Y)>=N:
             break
-        # print(str(int(len(Y)/N*100)) +' % Completed')
     X=np.reshape(X,(-1,(Rad*2+1)**3))
     X=X[:N,:]
     Y=Y[:N]
@@ -266,9 +263,6 @@ def gendrop(r,T): # Generates a droplet on a surface with T contact angle in deg
     A=margin(A,int(r))
     M=(math.cos(T*math.pi/180)+1)/2
     N=int(r+M*2*(r+1)) 
-    # N=int(r+M*2*(r)) 
-    # if T<90:
-    #     N=N-1
     if T>90:
         N=N+1 
     B=A*0; B[N:,:,:]=1;
@@ -361,8 +355,6 @@ def makecallback(ModelName):
         st=st+spa+'Validation loss'
         f.write(st+'\n')
         
-
-        
     class MyCallback(tf.keras.callbacks.Callback):
         def __init__(self):
             self.val_loss_=None
@@ -414,9 +406,7 @@ def correls(Coordinates,Angles,Rad):
             t1,t2=correl(Coordinates[ids[int(batches[I-1]):int(batches[I])],:],Angles[ids[int(batches[I-1]):int(batches[I])]],Rad)
             Coordinates2[int(batches[I-1]):int(batches[I]),:]=t1
             Angles2[int(batches[I-1]):int(batches[I])]=t2
-            
-        # Angles2=Angles2[ids]
-        # Coordinates2=Coordinates2[ids,:]
+
     else:
         Coordinates2,Angles2=correl(Coordinates,Angles,Rad)
     return Coordinates2,Angles2
@@ -494,8 +484,6 @@ def combines(y1,p1,y2,p2):
             p11[int(batches[I-1]):int(batches[I]),:]=t2
             y11[int(batches[I-1]):int(batches[I])]=t1
             
-        # Angles2=Angles2[ids]
-        # Coordinates2=Coordinates2[ids,:]
     else:
         y11,p11=combine(y1,p1,y2,p2)
     y11, p11=remout(y11, p11,per=.0001)
@@ -509,13 +497,10 @@ def combine(y1,p1,y2,p2):
         C2=np.tile(p1[I,:],(p1.shape[0],1))
         D2=np.sqrt(np.sum((C2-p1)**2,axis=1))
         ID2=np.argwhere(D2<32)
-        # print(ID)
         if len(ID)<=1 or len(ID2)<=1:
             continue
         y11[I,0]=y1[I,0]-(np.mean(y1[ID2,0])-np.mean(y2[ID,0]))
-        # p11=p1
-        # print(ID)
-    # y11, p11=remout(y11, p1,per=.01)
+
     return y11,p1
 def combineorig(y1,p1,y2,p2):
     y11=y1*1
@@ -526,11 +511,9 @@ def combineorig(y1,p1,y2,p2):
         C2=np.tile(p1[I,:],(p1.shape[0],1))
         D2=np.sqrt(np.sum((C2-p1)**2,axis=1))
         ID2=np.argwhere(D2<32)
-        # print(ID)
         if len(ID)<=1 or len(ID2)<=1:
             continue
         y11[I,0]=y1[I,0]-(np.mean(y1[ID2,0])-np.mean(y2[ID,0]))
-        # print(ID)
     y11, p11=remout(y11, p1,per=.0001)
     return y11,p11
 def predict(model,Rad,Array,Para=1,export=None,Mode='contact'):
@@ -599,17 +582,10 @@ def testspheres(model,Rad):
         X,p=feature(A,Rad)
         Y2=model.predict(X)
         Ang2[I,0]=np.mean(Y2)*180
-        # plt.figure()
-        # plt.hist(np.squeeze(Dist))
-        # plt.show()
         FileName='Data/Images/A2_' +str(I+1)+'.h5'
         A=readsec(FileName,1,1)
         X,p=feature(A,Rad)
         Y2=model.predict(X)
-        # Dist=(Y2)*180
-        # plt.figure()
-        # plt.hist(np.squeeze(Dist))
-        # plt.show()
         Ang2[I,1]=np.mean(Y2)*180
     import scipy.io as sio    
     
@@ -646,8 +622,7 @@ def hybridpredict(FileName,N,Rad,Para=1,regen=0,retrain=0,ModelType=2,Mode='cont
         X,Y=generate(N[0],Rad1,Para=Para,regen=regen)  
         X_train,Y_train,X_val,Y_val,X_test,Y_test=splitdata(X,Y,[.8,.1,.1])
         model1=modelmake(INPUT_SHAPE,ModelType=ModelType,Num=N[0])
-        model1=trainmodel(model1,X_train,Y_train,X_val,Y_val,epochs=30,retrain=retrain,ModelName='Model_Type'+str(ModelType)+'_Rad'+str(Rad1))
-        
+        model1=trainmodel(model1,X_train,Y_train,X_val,Y_val,epochs=30,retrain=retrain,ModelName='Model_Type'+str(ModelType)+'_Rad'+str(Rad1))        
         Angles3,Coordinates3=predict(model1,Rad1,FileName)
         
     return Angles3,Coordinates3
@@ -660,48 +635,17 @@ def getangle(FileName,Para=1,regen=0,retrain=0,ModelType=2,Mode='contact',Fast=0
         N=[1000]        
     if len(N)==2:
         Rad1=Rad[0] # larger size
-        # INPUT_SHAPE=[-1,Rad1*2+1,Rad1*2+1,Rad1*2+1,1]
-        # X,Y=generate(N[0],Rad1,Para=Para,regen=regen)  
-        # X_train,Y_train,X_val,Y_val,X_test,Y_test=splitdata(X,Y,[.8,.1,.1])
-        # model1=modelmake(INPUT_SHAPE,ModelType=ModelType,Num=N[0])
-        # model1=trainmodel(model1,X_train,Y_train,X_val,Y_val,epochs=30,retrain=retrain,ModelName='Model_Type'+str(ModelType)+'_Rad'+str(Rad1))
         model1=keras.models.load_model('Model/M8.h5')
         model2=keras.models.load_model('Model/M4.h5')
         Rad2=Rad[1] # smaller size
-        # INPUT_SHAPE=[-1,Rad2*2+1,Rad2*2+1,Rad2*2+1,1]
-        # X,Y=generate(N[1],Rad2,Para=Para,regen=regen)  
-        # X_train,Y_train,X_val,Y_val,X_test,Y_test=splitdata(X,Y,[.8,.1,.1])
-        # model2=modelmake(INPUT_SHAPE,ModelType=ModelType,Num=N[1])
-        # model2=trainmodel(model2,X_train,Y_train,X_val,Y_val,epochs=30,retrain=retrain,ModelName='Model_Type'+str(ModelType)+'_Rad'+str(Rad2))
-    
         Angles1,Coordinates1=predict(model1,Rad1,FileName,Mode=Mode)
         Angles2,Coordinates2=predict(model2,Rad2,FileName,Mode=Mode)
         Angles3,Coordinates3=combines(Angles1,Coordinates1,Angles2,Coordinates2)
         model1.save('Model/M8.h5')
         model2.save('Model/M4.h5')
     if len(N)==1:
-        # Rad1=Rad[0] # larger size
-        # INPUT_SHAPE=[-1,Rad1*2+1,Rad1*2+1,Rad1*2+1,1]
-        # X,Y=generate(N[0],Rad1,Para=Para,regen=regen)  
-        # X_train,Y_train,X_val,Y_val,X_test,Y_test=splitdata(X,Y,[.8,.1,.1])
-        # model1=modelmake(INPUT_SHAPE,ModelType=ModelType,Num=N[0])
-        # model1=trainmodel(model1,X_train,Y_train,X_val,Y_val,epochs=30,retrain=retrain,ModelName='Model_Type'+str(ModelType)+'_Rad'+str(Rad1))
         Rad1=Rad[0] # larger size
-        # INPUT_SHAPE=[-1,Rad1*2+1,Rad1*2+1,Rad1*2+1,1]
-        # X,Y=generate(N[0],Rad1,Para=Para,regen=regen)  
-        # X_train,Y_train,X_val,Y_val,X_test,Y_test=splitdata(X,Y,[.8,.1,.1])
-        # model1=modelmake(INPUT_SHAPE,ModelType=ModelType,Num=N[0])
-        # model1=trainmodel(model1,X_train,Y_train,X_val,Y_val,epochs=30,retrain=retrain,ModelName='Model_Type'+str(ModelType)+'_Rad'+str(Rad1))
         model1=keras.models.load_model('Model/M8.h5')
-        # model2=keras.models.load_model('Model/M4.h5')
-        # Rad2=Rad[1] # smaller size
-        # INPUT_SHAPE=[-1,Rad2*2+1,Rad2*2+1,Rad2*2+1,1]
-        # X,Y=generate(N[1],Rad2,Para=Para,regen=regen)  
-        # X_train,Y_train,X_val,Y_val,X_test,Y_test=splitdata(X,Y,[.8,.1,.1])
-        # model2=modelmake(INPUT_SHAPE,ModelType=ModelType,Num=N[1])
-        # model2=trainmodel(model2,X_train,Y_train,X_val,Y_val,epochs=30,retrain=retrain,ModelName='Model_Type'+str(ModelType)+'_Rad'+str(Rad2))
-    
         Angles3,Coordinates3=predict(model1,Rad1,FileName,Mode=Mode)        
-        # Angles3,Coordinates3=predict(model1,Rad1,FileName)
         
     return Angles3,Coordinates3
