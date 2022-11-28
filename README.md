@@ -19,9 +19,12 @@ da.hist(Angles)
 # Exporting the results as a text file
 da.saveresults(Angles,Coordinates,'Output1')
 ```
-and this the plotted distribution 
+and this the plotted distribution:
 <br>
 ![](img/dist1.png)
-and this an example of the saved output file as txt
+<br>
+<br>
+and this an example of the saved output file as txt:
 <br>
 ![](img/output.png)
+<br>
