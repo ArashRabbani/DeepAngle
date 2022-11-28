@@ -19,5 +19,4 @@ da.hist(Angles)
 # Exporting the results as a text file
 da.saveresults(Angles,Coordinates,'Output1')
 ```
-
-
+![](blob/main/img/dist1.png)
