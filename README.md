@@ -41,6 +41,29 @@ and this an example of the saved output file as txt:
 <br>
 ![](img/output.png)
 <br>
+
+### Demo #2 : Explicitly getting a 3D array as input
+
+```python
+import deepangle as da
+import scipy.io as sio
+# Reading a Matlab saved variable from the data directory that contains a variable called "A"
+Data=sio.loadmat('Data/Data2.mat')  
+Data=Data['A']
+# Visulizing 3 mid-slices of the volumetric image
+da.sliceshow(Data)
+# Extracting contact angles and corresponding points by explicitly giving the numpy array as input
+Angles,Coordinates=da.getangle(Data)
+# Plotting the angle distribution
+da.hist(Angles)
+# Exporting the results as a text file
+da.saveresults(Angles,Coordinates,'Output1')
+```
+and the sliceshow output would be:
+<br><br>
+![](img/slice.png)
+<br>
+
 ## How to install? 
 Simply download/clone the github repository and start importing the deepangle.py functions as in Demo#1. Make sure to have these python packages installed:
 * tensorflow
