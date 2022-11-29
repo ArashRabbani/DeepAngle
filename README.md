@@ -35,6 +35,18 @@ and this an example of the saved output file as txt:
 <br>
 ![](img/output.png)
 <br>
+## How to install? 
+Simply download/clone the github repository and start importing the deepangle.py functions as in Demo#1. Make sure to have these python packages installed:
+* tensorflow
+* joblib
+* tqdm
+* edt
+* h5py
+* sklearn
+* scipy
+* numpy
+* matplotlib
+
 
 ## Citation
 DeepAngle: Fast calculation of contact angles in tomography images using deep learning, Arash Rabbani and Chenhao Sun and Masoud Babaei and Vahid J. Niasar and Ryan T. Armstrong and Peyman Mostaghimi, arXiv 2211.15243 (2022).
