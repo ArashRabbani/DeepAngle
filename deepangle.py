@@ -111,6 +111,19 @@ def cornerpoints(A,Rad):
         P=np.concatenate((P,yy),axis=0)
     P=np.int32(P)    
     return P
+def sliceshow(A):
+    plt.figure(num=None, figsize=(10, 4), dpi=80, facecolor='w', edgecolor='k')
+    CM=plt.cm.viridis
+    ax1=plt.subplot(1,3,1); plt.axis('off'); ax1.set_title('X mid-slice')
+    plt.imshow(np.squeeze(A[np.int(A.shape[0]/2), :,:]), cmap=CM, interpolation='nearest')
+    plt.colorbar(orientation="horizontal")
+    ax2=plt.subplot(1,3,2); plt.axis('off'); ax2.set_title('Y mid-slice')
+    plt.imshow(np.squeeze(A[:,np.int(A.shape[1]/2), :]), cmap=CM, interpolation='nearest')
+    plt.colorbar(orientation="horizontal")
+    ax3=plt.subplot(1,3,3); plt.axis('off'); ax3.set_title('Z mid-slice'); 
+    plt.imshow(np.squeeze(A[:,:,np.int(A.shape[2]/2)]), cmap=CM, interpolation='nearest')
+    plt.colorbar(orientation="horizontal")
+    plt.show()
 def corner_gen(r,T): # Generates a geometry with T corner angle in degree and 2*r+1 is the size of the geometry 
     A=np.ones((2*r+1,2*r+1,2*r+1))
     A[r:,:,:]=0
@@ -626,7 +639,7 @@ def hybridpredict(FileName,N,Rad,Para=1,regen=0,retrain=0,ModelType=2,Mode='cont
         Angles3,Coordinates3=predict(model1,Rad1,FileName)
         
     return Angles3,Coordinates3
-def getangle(FileName,Para=1,regen=0,retrain=0,ModelType=2,Mode='contact',Fast=0):
+def getangle(FileName,Para=1,regen=0,retrain=0,ModelType=2,Mode='contact',Fast=1):
     import keras
     Rad=[8,4];
     N=[10000,10000]
