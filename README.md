@@ -9,6 +9,12 @@ This is the summary of the data flow from tomography images to contact angle pre
 ![](img/Figure.jpg)
 <br>
 
+## Accuracy? 
+We have validated DeepAngle by comparing it with direct measurement tequnique to predict contact angles on convex and concave surfaces. Please refer to the linked [Paper](https://arxiv.org/abs/2211.15243) for more details. The raw volumetric images of this test are availible in this repository at "Data/Test/".
+<br><br>
+![](img/Figure2.jpg)
+<br>
+
 ## How to use?
 Here, I have written some demos to calculate a few contact angles. 
 
