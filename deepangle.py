@@ -331,16 +331,39 @@ def modelmake(INPUT_SHAPE,ModelType=1,Num=10000):
     model.compile(optimizer=optimizer, loss='mse', metrics=['mse']) 
         
     return model
-def readsec(FileName,n,N):
-    f = h5py.File(FileName, 'r')
-    length=f['Map'].shape[2]
-    p1=np.int32(np.round(np.linspace(0,length,N+1)))[n-1]
-    p2=np.int32(np.round(np.linspace(0,length,N+1)))[n]
-    if n==N:
-        p2=p2+1
-    A=f['Map'][:,:,p1:p2]
-    f.close()
-    print('Section ' +str(n)+ ' out of ' +str(N)+ ' is read.')
+def readsec(FileName, n, N):
+    from scipy.io import loadmat
+    length = 0
+    if FileName.endswith('.h5'):
+        f = h5py.File(FileName, 'r')
+        first_field = list(f.keys())[0]  # Get the name of the first field
+        length = f[first_field].shape[2]
+        f.close()
+        print('Section ' + str(n) + ' out of ' + str(N) + ' is read from HDF5 file.')
+    elif FileName.endswith('.mat'):
+        data = loadmat(FileName)
+        first_variable = list(data.keys())[3]  # Get the name of the first variable
+        length = data[first_variable].shape[2]
+        print('Section ' + str(n) + ' out of ' + str(N) + ' is read from MATLAB file.')
+    elif FileName.endswith('.npy'):
+        A = np.load(FileName)
+        length = A.shape[2]
+        print('Section ' + str(n) + ' out of ' + str(N) + ' is read from .npy file.')
+
+    p1 = np.int32(np.round(np.linspace(0, length, N + 1)))[n - 1]
+    p2 = np.int32(np.round(np.linspace(0, length, N + 1)))[n]
+    if n == N:
+        p2 = p2 + 1
+
+    if FileName.endswith('.h5'):
+        f = h5py.File(FileName, 'r')
+        A = f[first_field][:, :, p1:p2]
+        f.close()
+    elif FileName.endswith('.mat'):
+        A = data[first_variable][:, :, p1:p2]
+    elif FileName.endswith('.npy'):
+        A = A[:, :, p1:p2]
+
     return A
 def now():
     import datetime
@@ -467,12 +490,52 @@ def testmodel(model,X,Y):
     R2=np.mean(abs(Y-np.ndarray.flatten(Y2)))
     print('R-squared is '+str(np.round(R2,3)))
     return R2
-def h5size(Name,Field):
-    # Fields is list of hdf file fields
-    with h5py.File(Name,'r') as f:
-        Shape=f[Field].shape  
-    return Shape 
-
+def h5size(file_name, field=None):
+    # Check file format
+    if file_name.endswith('.h5') or file_name.endswith('.hdf5'):
+        # Handle HDF5 files
+        with h5py.File(file_name, 'r') as f:
+            if field is None:
+                # Automatically detect field name
+                for key in f.keys():
+                    dataset = f[key]
+                    if dataset.ndim == 3:
+                        field = key
+                        break
+                if field is None:
+                    raise ValueError("No 3D field found in the HDF5 file.")
+            shape = f[field].shape
+    elif file_name.endswith('.mat'):
+        # Handle MATLAB files
+        import scipy.io
+        data = scipy.io.loadmat(file_name)
+        if field is None:
+            # Automatically detect field name
+            for key in data.keys():
+                dataset = data[key]
+                if isinstance(dataset, np.ndarray) and dataset.ndim == 3:
+                    field = key
+                    break
+            if field is None:
+                raise ValueError("No 3D field found in the MAT file.")
+        shape = data[field].shape
+    elif file_name.endswith('.npy'):
+        # Handle NumPy files
+        data = np.load(file_name)
+        if field is None:
+            # Automatically detect field name
+            for key in locals().keys():
+                dataset = locals()[key]
+                if isinstance(dataset, np.ndarray) and dataset.ndim == 3:
+                    field = key
+                    break
+            if field is None:
+                raise ValueError("No 3D field found in the NPY file.")
+        shape = locals()[field].shape
+    else:
+        raise ValueError("Unsupported file format. Only HDF5 (.h5/.hdf5), MAT (.mat), and NPY (.npy) files are supported.")
+    
+    return shape
 
 def remout(y_final,P_final,per=.02):
     MIN=np.quantile(y_final,per); MAX=np.quantile(y_final,1-per); 
@@ -531,7 +594,7 @@ def combineorig(y1,p1,y2,p2):
     return y11,p11
 def predict(model,Rad,Array,Para=1,export=None,Mode='contact'):
     if isinstance(Array, str):
-        S=h5size(Array,'Map')
+        S=h5size(Array)
     else:
         S=Array.shape
     
@@ -601,7 +664,6 @@ def testspheres(model,Rad):
         Y2=model.predict(X)
         Ang2[I,1]=np.mean(Y2)*180
     import scipy.io as sio    
-    
     B=sio.loadmat('Data/GT.mat')  
     GT=B['GT'] 
     plt.figure()
@@ -624,8 +686,8 @@ def hybridpredict(FileName,N,Rad,Para=1,regen=0,retrain=0,ModelType=2,Mode='cont
         model2=modelmake(INPUT_SHAPE,ModelType=ModelType,Num=N[1])
         model2=trainmodel(model2,X_train,Y_train,X_val,Y_val,epochs=30,retrain=retrain,ModelName='Model_Type'+str(ModelType)+'_Rad'+str(Rad2))
     
-        Angles1,Coordinates1=predict(model1,Rad1,FileName,Mode=Mode)
-        Angles2,Coordinates2=predict(model2,Rad2,FileName,Mode=Mode)
+        Angles1,Coordinates1=predict(model1,Rad1,FileName,Mode=Mode,Para=Para)
+        Angles2,Coordinates2=predict(model2,Rad2,FileName,Mode=Mode,Para=Para)
         Angles3,Coordinates3=combines(Angles1,Coordinates1,Angles2,Coordinates2)
         model1.save('Model/M8.h5')
         model2.save('Model/M4.h5')
@@ -636,7 +698,7 @@ def hybridpredict(FileName,N,Rad,Para=1,regen=0,retrain=0,ModelType=2,Mode='cont
         X_train,Y_train,X_val,Y_val,X_test,Y_test=splitdata(X,Y,[.8,.1,.1])
         model1=modelmake(INPUT_SHAPE,ModelType=ModelType,Num=N[0])
         model1=trainmodel(model1,X_train,Y_train,X_val,Y_val,epochs=30,retrain=retrain,ModelName='Model_Type'+str(ModelType)+'_Rad'+str(Rad1))        
-        Angles3,Coordinates3=predict(model1,Rad1,FileName)
+        Angles3,Coordinates3=predict(model1,Rad1,FileName,Para=Para)
         
     return Angles3,Coordinates3
 def getangle(FileName,Para=1,regen=0,retrain=0,ModelType=2,Mode='contact',Fast=1):
@@ -651,14 +713,14 @@ def getangle(FileName,Para=1,regen=0,retrain=0,ModelType=2,Mode='contact',Fast=1
         model1=keras.models.load_model('Model/M8.h5')
         model2=keras.models.load_model('Model/M4.h5')
         Rad2=Rad[1] # smaller size
-        Angles1,Coordinates1=predict(model1,Rad1,FileName,Mode=Mode)
-        Angles2,Coordinates2=predict(model2,Rad2,FileName,Mode=Mode)
+        Angles1,Coordinates1=predict(model1,Rad1,FileName,Mode=Mode,Para=Para)
+        Angles2,Coordinates2=predict(model2,Rad2,FileName,Mode=Mode,Para=Para)
         Angles3,Coordinates3=combines(Angles1,Coordinates1,Angles2,Coordinates2)
         model1.save('Model/M8.h5')
         model2.save('Model/M4.h5')
     if len(N)==1:
         Rad1=Rad[0] # larger size
         model1=keras.models.load_model('Model/M8.h5')
-        Angles3,Coordinates3=predict(model1,Rad1,FileName,Mode=Mode)        
+        Angles3,Coordinates3=predict(model1,Rad1,FileName,Mode=Mode,Para=Para)        
         
     return Angles3,Coordinates3
