@@ -88,5 +88,5 @@ Simply download/clone the github repository and start importing the deepangle.py
 
 ## Citation
 Please consider citing this paper if you are using DeepAngle in your research: 
-[DeepAngle: Fast calculation of contact angles in tomography images using deep learning, Arash Rabbani and Chenhao Sun and Masoud Babaei and Vahid J. Niasar and Ryan T. Armstrong and Peyman Mostaghimi, arXiv 2211.15243 (2022).]
+[Rabbani, A., Sun, C., Babaei, M., Niasar, V. J., Armstrong, R. T., & Mostaghimi, P. (2023). DeepAngle: Fast calculation of contact angles in tomography images using deep learning. Geoenergy Science and Engineering, 227, 211807.]
 
